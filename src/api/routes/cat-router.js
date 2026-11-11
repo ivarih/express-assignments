@@ -6,13 +6,13 @@ import {
     putCat,
     deleteCat,
 } from '../controllers/cat-controller.js';
-import { upload } from '../../middlewares.js';
+import { upload, createThumbnail } from '../../middlewares.js';
 
 const catRouter = express.Router();
 
 catRouter.route('/')
     .get(getCat)
-    .post(upload.single('file'), postCat);
+    .post(upload.single('file'), createThumbnail, postCat);
 
 catRouter.route('/:id')
     .get(getCatById)
@@ -20,4 +20,3 @@ catRouter.route('/:id')
     .delete(deleteCat);
 
 export default catRouter;
-
