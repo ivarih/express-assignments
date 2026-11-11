@@ -1,33 +1,64 @@
-import { addCat, findCatById, listAllCats } from '../models/cat-model.js';
+import { addCat, findCatById, listAllCats, modifyCat, removeCat } from '../models/cat-model.js';
 
-const getCat = (req, res) => {
-    res.json(listAllCats());
-};
-
-const getCatById = (req, res) => {
-    const cat = findCatById(req.params.id);
-    if (cat) {
-        res.json(cat);
-    } else {
-        res.sendStatus(404);
+const getCat = async (req, res) => {
+    try {
+        const cats = await listAllCats();
+        res.json(cats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 
-const postCat = (req, res) => {
-    const result = addCat(req.body);
-    if (result.cat_id) {
+const getCatById = async (req, res) => {
+    try {
+        const cat = await findCatById(req.params.id);
+        if (cat) {
+            res.json(cat);
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const postCat = async (req, res) => {
+    try {
+        const catData = {
+            ...req.body,
+            filename: req.file ? req.file.filename : null,
+        };
+        const result = await addCat(catData);
         res.status(201).json({ message: 'New cat added.', result });
-    } else {
-        res.sendStatus(400);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 
-const putCat = (req, res) => {
-    res.json({ message: 'Cat item updated.' });
+const putCat = async (req, res) => {
+    try {
+        const success = await modifyCat(req.body, req.params.id);
+        if (success) {
+            res.json({ message: 'Cat item updated.' });
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
-const deleteCat = (req, res) => {
-    res.json({ message: 'Cat item deleted.' });
+const deleteCat = async (req, res) => {
+    try {
+        const success = await removeCat(req.params.id);
+        if (success) {
+            res.json({ message: 'Cat item deleted.' });
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
 export { getCat, getCatById, postCat, putCat, deleteCat };

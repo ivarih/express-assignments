@@ -1,39 +1,24 @@
-const userItems = [
-    {
-        user_id: 3609,
-        name: 'John Doe',
-        username: 'johndoe',
-        email: 'john@metropolia.fi',
-        role: 'user',
-        password: 'password',
-    },
-    {
-        user_id: 3602,
-        name: 'Jane Doe',
-        username: 'janedoe',
-        email: 'jane@metropolia.fi',
-        role: 'admin',
-        password: 'password',
-    },
-];
+import pool from '../../utils/db.js';
 
-const listAllUsers = () => userItems;
+const listAllUsers = async () => {
+    const [rows] = await pool.query('SELECT user_id, name, username, email, role FROM wsk_users');
+    return rows;
+};
 
-const findUserById = (id) => userItems.find((item) => item.user_id == id);
+const findUserById = async (id) => {
+    const [rows] = await pool.execute(
+        'SELECT user_id, name, username, email, role FROM wsk_users WHERE user_id = ?',
+        [id]
+    );
+    return rows[0];
+};
 
-const addUser = (user) => {
-    const { name, username, email, role, password } = user;
-    const newId = userItems.length > 0 ? userItems[0].user_id + 1 : 1;
-    const newUser = {
-        user_id: newId,
-        name,
-        username,
-        email,
-        role: role || 'user',
-        password,
-    };
-    userItems.unshift(newUser);
-    return { user_id: newId };
+const addUser = async (user) => {
+    const { name, username, email, password, role } = user;
+    const sql = `INSERT INTO wsk_users (name, username, email, password, role)
+               VALUES (?, ?, ?, ?, ?)`;
+    const [result] = await pool.execute(sql, [name, username, email, password, role || 'user']);
+    return { user_id: result.insertId };
 };
 
 export { listAllUsers, findUserById, addUser };
