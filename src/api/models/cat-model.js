@@ -6,7 +6,9 @@ const listAllCats = async () => {
 };
 
 const findCatById = async (id) => {
-    const [rows] = await pool.execute('SELECT * FROM wsk_cats WHERE cat_id = ?', [id]);
+    const [rows] = await pool.execute('SELECT * FROM wsk_cats WHERE cat_id = ?', [
+        id,
+    ]);
     return rows[0];
 };
 
@@ -14,7 +16,13 @@ const addCat = async (cat) => {
     const { cat_name, weight, owner, filename, birthdate } = cat;
     const sql = `INSERT INTO wsk_cats (cat_name, weight, owner, filename, birthdate)
                VALUES (?, ?, ?, ?, ?)`;
-    const [result] = await pool.execute(sql, [cat_name, weight, owner, filename, birthdate]);
+    const [result] = await pool.execute(sql, [
+        cat_name,
+        weight,
+        owner,
+        filename,
+        birthdate,
+    ]);
     return { cat_id: result.insertId };
 };
 
@@ -25,7 +33,9 @@ const modifyCat = async (cat, id) => {
 };
 
 const removeCat = async (id) => {
-    const [result] = await pool.execute('DELETE FROM wsk_cats WHERE cat_id = ?', [id]);
+    const [result] = await pool.execute('DELETE FROM wsk_cats WHERE cat_id = ?', [
+        id,
+    ]);
     return result.affectedRows > 0;
 };
 

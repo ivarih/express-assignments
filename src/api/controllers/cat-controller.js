@@ -1,4 +1,10 @@
-import { addCat, findCatById, listAllCats, modifyCat, removeCat } from '../models/cat-model.js';
+import {
+    addCat,
+    findCatById,
+    listAllCats,
+    modifyCat,
+    removeCat,
+} from '../models/cat-model.js';
 
 const getCat = async (req, res) => {
     try {
@@ -26,6 +32,7 @@ const postCat = async (req, res) => {
     try {
         const catData = {
             ...req.body,
+            owner: req.user.user_id,
             filename: req.file ? req.file.filename : null,
         };
         const result = await addCat(catData);
@@ -37,6 +44,16 @@ const postCat = async (req, res) => {
 
 const putCat = async (req, res) => {
     try {
+
+        const existingCat = await findCatById(req.params.id);
+        if (!existingCat) {
+            return res.sendStatus(404);
+        }
+
+        if (req.user.role !== 'admin' && existingCat.owner !== req.user.user_id) {
+            return res.status(403).json({ message: 'Not authorized to modify this cat' });
+        }
+
         const success = await modifyCat(req.body, req.params.id);
         if (success) {
             res.json({ message: 'Cat item updated.' });
@@ -50,6 +67,16 @@ const putCat = async (req, res) => {
 
 const deleteCat = async (req, res) => {
     try {
+
+        const existingCat = await findCatById(req.params.id);
+        if (!existingCat) {
+            return res.sendStatus(404);
+        }
+
+        if (req.user.role !== 'admin' && existingCat.owner !== req.user.user_id) {
+            return res.status(403).json({ message: 'Not authorized to delete this cat' });
+        }
+
         const success = await removeCat(req.params.id);
         if (success) {
             res.json({ message: 'Cat item deleted.' });
@@ -62,4 +89,3 @@ const deleteCat = async (req, res) => {
 };
 
 export { getCat, getCatById, postCat, putCat, deleteCat };
-

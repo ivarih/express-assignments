@@ -1,27 +1,25 @@
-import multer from 'multer';
-import sharp from 'sharp';
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
 
-const upload = multer({ dest: 'uploads/' });
 
-const createThumbnail = async (req, res, next) => {
-    if (!req.file) {
-        next();
-        return;
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token missing' });
     }
 
-    const thumbnailPath = `${req.file.path}_thumb.png`;
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Token expired or invalid' });
+        }
 
-    try {
-        await sharp(req.file.path)
-            .resize(160, 160)
-            .png()
-            .toFile(thumbnailPath);
+
+        req.user = user;
         next();
-    } catch (err) {
-        console.error('Error creating thumbnail:', err);
-        next(err);
-    }
+    });
 };
 
-export { upload, createThumbnail };
-
+export { authenticateToken };

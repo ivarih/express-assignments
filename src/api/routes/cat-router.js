@@ -1,4 +1,5 @@
 import express from 'express';
+import { authenticateToken } from '../../middlewares.js';
 import {
     getCat,
     getCatById,
@@ -6,17 +7,17 @@ import {
     putCat,
     deleteCat,
 } from '../controllers/cat-controller.js';
-import { upload, createThumbnail } from '../../middlewares.js';
 
 const catRouter = express.Router();
 
 catRouter.route('/')
     .get(getCat)
-    .post(upload.single('file'), createThumbnail, postCat);
+    .post(authenticateToken, postCat);
 
 catRouter.route('/:id')
     .get(getCatById)
-    .put(putCat)
-    .delete(deleteCat);
+    .put(authenticateToken, putCat)
+    .delete(authenticateToken, deleteCat);
 
 export default catRouter;
+
