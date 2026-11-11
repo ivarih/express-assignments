@@ -6,85 +6,103 @@ import {
     removeCat,
 } from '../models/cat-model.js';
 
-const getCat = async (req, res) => {
+const getCat = async (req, res, next) => {
     try {
         const cats = await listAllCats();
         res.json(cats);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
 
-const getCatById = async (req, res) => {
+const getCatById = async (req, res, next) => {
     try {
         const cat = await findCatById(req.params.id);
-        if (cat) {
-            res.json(cat);
-        } else {
-            res.sendStatus(404);
+        if (!cat) {
+            const error = new Error('Cat not found');
+            error.status = 404;
+            return next(error);
         }
+        res.json(cat);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
 
-const postCat = async (req, res) => {
+const postCat = async (req, res, next) => {
     try {
+        if (!req.file) {
+            const error = new Error('Invalid or missing file');
+            error.status = 400;
+            return next(error);
+        }
+
         const catData = {
             ...req.body,
             owner: req.user.user_id,
-            filename: req.file ? req.file.filename : null,
+            filename: req.file.filename,
         };
+
         const result = await addCat(catData);
-        res.status(201).json({ message: 'New cat added.', result });
+        res.status(201).json({ message: 'New cat added.', ...result });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
 
-const putCat = async (req, res) => {
+const putCat = async (req, res, next) => {
     try {
-
         const existingCat = await findCatById(req.params.id);
         if (!existingCat) {
-            return res.sendStatus(404);
+            const error = new Error('Cat not found');
+            error.status = 404;
+            return next(error);
         }
 
         if (req.user.role !== 'admin' && existingCat.owner !== req.user.user_id) {
-            return res.status(403).json({ message: 'Not authorized to modify this cat' });
+            const error = new Error('Not authorized to modify this cat');
+            error.status = 403;
+            return next(error);
         }
 
         const success = await modifyCat(req.body, req.params.id);
         if (success) {
             res.json({ message: 'Cat item updated.' });
         } else {
-            res.sendStatus(404);
+            const error = new Error('Failed to update cat');
+            error.status = 400;
+            return next(error);
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
 
-const deleteCat = async (req, res) => {
+const deleteCat = async (req, res, next) => {
     try {
-
         const existingCat = await findCatById(req.params.id);
         if (!existingCat) {
-            return res.sendStatus(404);
+            const error = new Error('Cat not found');
+            error.status = 404;
+            return next(error);
         }
 
         if (req.user.role !== 'admin' && existingCat.owner !== req.user.user_id) {
-            return res.status(403).json({ message: 'Not authorized to delete this cat' });
+            const error = new Error('Not authorized to delete this cat');
+            error.status = 403;
+            return next(error);
         }
 
         const success = await removeCat(req.params.id);
         if (success) {
             res.json({ message: 'Cat item deleted.' });
         } else {
-            res.sendStatus(404);
+            const error = new Error('Failed to delete cat');
+            error.status = 400;
+            return next(error);
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
 
